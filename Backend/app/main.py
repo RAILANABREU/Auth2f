@@ -20,7 +20,7 @@ def create_app() -> FastAPI:
 
     from .api import auth, files
     app.include_router(auth.router)
-
+    app.include_router(files.router)
     return app
 
 app = create_app()
