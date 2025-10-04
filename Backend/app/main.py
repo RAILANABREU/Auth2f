@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from .db import Base, engine
 
 def create_app() -> FastAPI:
@@ -17,6 +18,14 @@ def create_app() -> FastAPI:
     @app.get("/health", tags=["Health"])
     async def health_check():
         return {"status": "ok"}
+    
+    app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # aceita qualquer origem
+    allow_credentials=True,
+    allow_methods=["*"],  # permite GET, POST, PUT, DELETE, OPTIONS, etc.
+    allow_headers=["*"],  # permite qualquer cabeçalho
+)
 
     from .api import auth, files
     app.include_router(auth.router)

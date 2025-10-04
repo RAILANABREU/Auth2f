@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:8000/api';
+const API_URL = "http://localhost:4004";
 
 interface ApiError {
   detail?: string;
@@ -14,34 +14,36 @@ export class ApiClient {
 
   private async handleResponse<T>(response: Response): Promise<T> {
     if (!response.ok) {
-      const error: ApiError = await response.json().catch(() => ({ 
-        message: 'An error occurred' 
+      const error: ApiError = await response.json().catch(() => ({
+        message: "An error occurred",
       }));
-      
+
       if (response.status === 401) {
         // Clear tokens on unauthorized
-        sessionStorage.removeItem('accessToken');
-        sessionStorage.removeItem('pre2faToken');
-        window.location.href = '/login';
+        sessionStorage.removeItem("accessToken");
+        sessionStorage.removeItem("pre2faToken");
+        window.location.href = "/login";
       }
-      
-      throw new Error(error.detail || error.message || `HTTP ${response.status}`);
+
+      throw new Error(
+        error.detail || error.message || `HTTP ${response.status}`
+      );
     }
-    
+
     return response.json();
   }
 
   async get<T>(endpoint: string, token?: string): Promise<T> {
     const headers: HeadersInit = {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     };
-    
+
     if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
+      headers["Authorization"] = `Bearer ${token}`;
     }
 
     const response = await fetch(`${this.baseURL}${endpoint}`, {
-      method: 'GET',
+      method: "GET",
       headers,
     });
 
@@ -50,15 +52,15 @@ export class ApiClient {
 
   async post<T>(endpoint: string, data?: unknown, token?: string): Promise<T> {
     const headers: HeadersInit = {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     };
-    
+
     if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
+      headers["Authorization"] = `Bearer ${token}`;
     }
 
     const response = await fetch(`${this.baseURL}${endpoint}`, {
-      method: 'POST',
+      method: "POST",
       headers,
       body: data ? JSON.stringify(data) : undefined,
     });
@@ -66,15 +68,19 @@ export class ApiClient {
     return this.handleResponse<T>(response);
   }
 
-  async postFormData<T>(endpoint: string, formData: FormData, token?: string): Promise<T> {
+  async postFormData<T>(
+    endpoint: string,
+    formData: FormData,
+    token?: string
+  ): Promise<T> {
     const headers: HeadersInit = {};
-    
+
     if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
+      headers["Authorization"] = `Bearer ${token}`;
     }
 
     const response = await fetch(`${this.baseURL}${endpoint}`, {
-      method: 'POST',
+      method: "POST",
       headers,
       body: formData,
     });
@@ -84,15 +90,15 @@ export class ApiClient {
 
   async delete<T>(endpoint: string, token?: string): Promise<T> {
     const headers: HeadersInit = {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     };
-    
+
     if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
+      headers["Authorization"] = `Bearer ${token}`;
     }
 
     const response = await fetch(`${this.baseURL}${endpoint}`, {
-      method: 'DELETE',
+      method: "DELETE",
       headers,
     });
 

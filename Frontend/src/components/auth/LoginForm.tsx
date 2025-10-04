@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import {
   Box,
   Button,
@@ -10,18 +10,18 @@ import {
   IconButton,
   Alert,
   Card,
-} from '@mui/joy';
-import { Eye, EyeOff, Lock } from 'lucide-react';
-import { authService } from '@/services/auth';
-import { useAuthStore } from '@/store/authStore';
+} from "@mui/joy";
+import { Eye, EyeOff, Lock } from "lucide-react";
+import { authService } from "@/services/auth";
+import { useAuthStore } from "@/store/authStore";
 
 export const LoginForm = () => {
   const navigate = useNavigate();
   const { setPre2faToken } = useAuthStore();
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const isValid = username.trim() && password.trim();
@@ -31,14 +31,14 @@ export const LoginForm = () => {
     if (!isValid) return;
 
     setLoading(true);
-    setError('');
+    setError("");
 
     try {
       const response = await authService.login(username, password);
-      setPre2faToken(response.pre2fa_token);
-      navigate('/2fa');
+      setPre2faToken(response.token);
+      navigate("/2fa");
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed');
+      setError(err instanceof Error ? err.message : "Login failed");
     } finally {
       setLoading(false);
     }
@@ -47,33 +47,33 @@ export const LoginForm = () => {
   return (
     <Box
       sx={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'linear-gradient(135deg, #0B6BCB 0%, #084592 100%)',
+        minHeight: "100vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "linear-gradient(135deg, #0B6BCB 0%, #084592 100%)",
         padding: 3,
       }}
     >
       <Card
         sx={{
-          width: '100%',
+          width: "100%",
           maxWidth: 440,
           padding: 4,
-          boxShadow: 'xl',
+          boxShadow: "xl",
         }}
       >
-        <Box sx={{ mb: 3, textAlign: 'center' }}>
+        <Box sx={{ mb: 3, textAlign: "center" }}>
           <Box
             sx={{
               width: 64,
               height: 64,
-              borderRadius: '16px',
-              background: 'linear-gradient(135deg, #0B6BCB 0%, #084592 100%)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              margin: '0 auto 16px',
+              borderRadius: "16px",
+              background: "linear-gradient(135deg, #0B6BCB 0%, #084592 100%)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              margin: "0 auto 16px",
             }}
           >
             <Lock size={32} color="white" />
@@ -81,7 +81,7 @@ export const LoginForm = () => {
           <Typography level="h2" sx={{ mb: 1 }}>
             Bem-vindo de volta
           </Typography>
-          <Typography level="body-sm" sx={{ color: 'text.secondary' }}>
+          <Typography level="body-sm" sx={{ color: "text.secondary" }}>
             Entre para acessar seus arquivos
           </Typography>
         </Box>
@@ -108,7 +108,7 @@ export const LoginForm = () => {
           <FormControl sx={{ mb: 3 }}>
             <FormLabel>Senha</FormLabel>
             <Input
-              type={showPassword ? 'text' : 'password'}
+              type={showPassword ? "text" : "password"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
@@ -137,13 +137,13 @@ export const LoginForm = () => {
             Fazer login
           </Button>
 
-          <Typography level="body-sm" sx={{ textAlign: 'center' }}>
-            Não tem uma conta?{' '}
+          <Typography level="body-sm" sx={{ textAlign: "center" }}>
+            Não tem uma conta?{" "}
             <Link
               to="/register"
               style={{
-                color: 'var(--joy-palette-primary-500)',
-                textDecoration: 'none',
+                color: "var(--joy-palette-primary-500)",
+                textDecoration: "none",
                 fontWeight: 600,
               }}
             >
