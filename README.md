@@ -187,15 +187,11 @@ mypy app/
 
 - As **portas estão fixas** (4004 e 8081) — ajuste futuramente no `.env` e `main.py`.
 - O backend usa **SQLite local** (`app.db`) — não é necessário servidor de banco.
-- Para produção:
-  - Configure CORS com origens específicas
-  - Use tokens JWT com expiração curta e refresh
-  - Armazene arquivos em provedores como **S3**, **Azure Blob** ou **GCP Storage**
 
 ---
 
 ## ✨ Créditos
 
-Desenvolvido por **Railan Abreu**  
+Desenvolvido por **Railan Abreu** e **Gabriel Alvin**
 📚 Projeto acadêmico — Segurança da Informação e Criptografia Aplicada  
 💡 Frameworks: FastAPI + React + Joy UI
