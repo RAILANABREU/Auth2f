@@ -34,11 +34,15 @@ export const TwoFAForm = () => {
       if (!token) {
         throw new Error("Token de acesso ausente na resposta da API.");
       }
-      // Persiste o access token no store (e.g., sessionStorage por trás)
+
+      // persiste imediatamente para o guard enxergar no mesmo tick
+      sessionStorage.setItem("accessToken", token);
+
+      // atualiza o store e limpa o pre2fa
       setAccessToken(token);
       setPre2faToken(null);
 
-      // Navega para o app; também temos o efeito acima que garante o redirect
+      // navega direto
       navigate("/app/files", { replace: true });
     } catch (err) {
       console.error("[TwoFA] verify2FA error:", err);

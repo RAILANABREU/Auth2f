@@ -1,5 +1,20 @@
 import { useState } from "react";
-import { Box, Card, IconButton, Typography, CircularProgress } from "@mui/joy";
+import {
+  Box,
+  Card,
+  IconButton,
+  Typography,
+  CircularProgress,
+  Modal,
+  ModalDialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  FormControl,
+  FormLabel,
+  Input,
+  Button,
+} from "@mui/joy";
 import { Download, Trash2, FileText } from "lucide-react";
 import { filesService, FileMetadata } from "@/services/files";
 import { useAuthStore } from "@/store/authStore";
@@ -13,6 +28,9 @@ export const FileItem = ({ file, onDelete }: FileItemProps) => {
   const { accessToken } = useAuthStore();
   const [downloading, setDownloading] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [pwdOpen, setPwdOpen] = useState(false);
+  const [pwd, setPwd] = useState("");
+  const [pwdError, setPwdError] = useState("");
 
   const formatBytes = (bytes?: number | null) => {
     if (bytes === null || bytes === undefined) return "Tamanho desconhecido";
@@ -40,12 +58,16 @@ export const FileItem = ({ file, onDelete }: FileItemProps) => {
     });
   };
 
-  const handleDownload = async () => {
+  const handleDownload = async (pwdValue: string) => {
     if (!accessToken) return;
 
     setDownloading(true);
     try {
-      const response = await filesService.downloadFile(file.id, accessToken);
+      const response = await filesService.downloadFile(
+        file.id,
+        pwdValue,
+        accessToken
+      );
       const contentType = response.headers.get("content-type") || "";
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
@@ -111,7 +133,7 @@ export const FileItem = ({ file, onDelete }: FileItemProps) => {
           width: { xs: "100%", sm: 56 },
           height: { xs: 56, sm: 56 },
           borderRadius: "12px",
-          bgcolor: "trans{/parent",
+          bgcolor: "transparent",
         }}
       >
         <FileText size={32} color="var(--joy-palette-primary-500)" />
@@ -155,7 +177,7 @@ export const FileItem = ({ file, onDelete }: FileItemProps) => {
         <IconButton
           variant="plain"
           color="primary"
-          onClick={handleDownload}
+          onClick={() => setPwdOpen(true)}
           disabled={downloading}
           aria-label="Baixar arquivo"
           title="Baixar arquivo"
@@ -177,6 +199,69 @@ export const FileItem = ({ file, onDelete }: FileItemProps) => {
           {deleting ? <CircularProgress size="sm" /> : <Trash2 size={20} />}
         </IconButton>
       </Box>
+
+      <Modal
+        open={pwdOpen}
+        onClose={() => {
+          setPwdOpen(false);
+          setPwd("");
+          setPwdError("");
+        }}
+      >
+        <ModalDialog>
+          <DialogTitle>Informar senha para decifrar</DialogTitle>
+          <DialogContent>
+            Esta senha será usada para derivar a chave (scrypt) e decifrar o
+            arquivo no servidor.
+          </DialogContent>
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              const value = pwd.trim();
+              if (!value) {
+                setPwdError("Informe a senha.");
+                return;
+              }
+              setPwdError("");
+              setPwdOpen(false);
+              await handleDownload(value);
+              setPwd("");
+            }}
+          >
+            <FormControl error={Boolean(pwdError)} sx={{ mt: 1 }}>
+              <FormLabel>Senha</FormLabel>
+              <Input
+                type="password"
+                value={pwd}
+                onChange={(e) => setPwd(e.target.value)}
+                placeholder="Digite sua senha"
+                autoFocus
+                required
+              />
+              {pwdError && (
+                <Typography level="body-xs" color="danger" sx={{ mt: 0.5 }}>
+                  {pwdError}
+                </Typography>
+              )}
+            </FormControl>
+            <DialogActions sx={{ mt: 2 }}>
+              <Button
+                variant="plain"
+                onClick={() => {
+                  setPwdOpen(false);
+                  setPwd("");
+                  setPwdError("");
+                }}
+              >
+                Cancelar
+              </Button>
+              <Button type="submit" variant="solid" loading={downloading}>
+                Baixar
+              </Button>
+            </DialogActions>
+          </form>
+        </ModalDialog>
+      </Modal>
     </Card>
   );
 };

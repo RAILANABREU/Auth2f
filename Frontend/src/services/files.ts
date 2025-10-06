@@ -30,15 +30,27 @@ export const filesService = {
     );
   },
 
-  async downloadFile(fileId: number, token: string): Promise<Response> {
-    const response = await fetch(`http://localhost:8000/api/files/${fileId}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+  async downloadFile(
+    fileId: number,
+    password: string,
+    token: string
+  ): Promise<Response> {
+    const baseUrl = import.meta.env.VITE_API_URL || "http://127.0.0.1:4004";
+    const response = await fetch(
+      `${baseUrl}/files/${fileId}/download-decrypted`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ password }),
+      }
+    );
 
     if (!response.ok) {
-      throw new Error("Failed to download file");
+      const msg = await response.text().catch(() => "");
+      throw new Error(msg || "Failed to download file");
     }
 
     return response;
