@@ -1,8 +1,8 @@
-import { deriveKey } from './scrypt';
-import { encryptFile } from './aes-gcm';
+import { deriveKey } from "./scrypt";
+import { encryptFile } from "./aes-gcm";
 
 export interface EncryptionParams {
-  N: number;
+  n: number;
   r: number;
   p: number;
   dkLen: number;
@@ -25,7 +25,7 @@ export async function createEncryptedEnvelope(
 
   // KDF parameters
   const kdfParams: EncryptionParams = {
-    N: 16384,
+    n: 16384,
     r: 8,
     p: 1,
     dkLen: 32,

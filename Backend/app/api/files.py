@@ -84,8 +84,8 @@ async def upload_multipart(
 
     rec = FileRepo(db).create(
         owner_id=user.id,
-        filename=filename,
-        envelope=envelope,
+        filename_original=filename,
+        envelope_json=envelope,
         size_bytes=size_bytes,
     )
     return {"id": rec.id, "message": "uploaded: ", "filename": filename}
