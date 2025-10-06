@@ -36,7 +36,7 @@ def list_files(authorization: Optional[str] = Header(None), db: Session = Depend
     user = _current_user(authorization, db)
     items = FileRepo(db).list_by_owner(user.id)
     return FileListResponse(
-        files=[FileMeta(id=i.id, filename_original=i.filename_original, size_bytes=i.size_bytes) for i in items]
+        files=[FileMeta(id=i.id, filename_original=i.filename_original, size_bytes=i.size_bytes, created_at=i.created_at) for i in items]
     )
 
 @router.get("/{file_id}", response_model=FileEnvelopeResponse)
@@ -46,7 +46,7 @@ def get_file(file_id: int, authorization: Optional[str] = Header(None), db: Sess
     if not rec:
         raise HTTPException(status_code=404, detail="File not found")
     env = json.loads(rec.envelope_json)
-    return FileEnvelopeResponse(id=rec.id, filename_original=rec.filename_original, envelope_json=env)
+    return FileEnvelopeResponse(id=rec.id, filename_original=rec.filename_original, envelope_json=env, size_bytes=rec.size_bytes, created_at=rec.created_at)
 
 @router.post("/upload-multipart", status_code=201)
 async def upload_multipart(

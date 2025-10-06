@@ -1,5 +1,7 @@
 from typing import List, Dict
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field 
+from datetime import datetime
+
 
 #AUTH
 
@@ -37,6 +39,7 @@ class FileMeta(BaseModel):
     id: int
     filename_original: str
     size_bytes: int
+    created_at: datetime
 
 class FileListResponse(BaseModel):
     files: List[FileMeta]

@@ -1,10 +1,10 @@
-import { apiClient } from './api';
+import { apiClient } from "./api";
 
 export interface FileMetadata {
   id: number;
-  filename: string;
-  file_size: number;
-  upload_date: string;
+  filename_original: string;
+  size_bytes: number;
+  created_at: string;
   version: number;
   kdf: string;
   kdf_params: Record<string, unknown>;
@@ -19,24 +19,28 @@ export interface UploadResponse {
 
 export const filesService = {
   async listFiles(token: string): Promise<FileMetadata[]> {
-    return apiClient.get<FileMetadata[]>('/files', token);
+    return apiClient.get<FileMetadata[]>("/files", token);
   },
 
   async uploadFile(formData: FormData, token: string): Promise<UploadResponse> {
-    return apiClient.postFormData<UploadResponse>('/files/upload-multipart', formData, token);
+    return apiClient.postFormData<UploadResponse>(
+      "/files/upload-multipart",
+      formData,
+      token
+    );
   },
 
   async downloadFile(fileId: number, token: string): Promise<Response> {
     const response = await fetch(`http://localhost:8000/api/files/${fileId}`, {
       headers: {
-        'Authorization': `Bearer ${token}`,
+        Authorization: `Bearer ${token}`,
       },
     });
-    
+
     if (!response.ok) {
-      throw new Error('Failed to download file');
+      throw new Error("Failed to download file");
     }
-    
+
     return response;
   },
 
