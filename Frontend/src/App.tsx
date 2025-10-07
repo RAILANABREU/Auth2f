@@ -11,7 +11,7 @@ import Files from './pages/Files';
 import NotFound from "./pages/NotFound";
 
 const App = () => (
-  <BrowserRouter>
+  <BrowserRouter future={{ v7_relativeSplatPath: true }}>
     <CssVarsProvider theme={theme} defaultMode="light">
       <CssBaseline />
       <Routes>

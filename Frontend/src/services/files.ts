@@ -1,4 +1,6 @@
 import { apiClient } from "./api";
+import { decryptEnvelope } from "../utils/crypto/envelope";
+
 
 export interface FileMetadata {
   id: number;
@@ -34,27 +36,36 @@ export const filesService = {
     fileId: number,
     password: string,
     token: string
-  ): Promise<Response> {
+  ): Promise<void> {
     const baseUrl = import.meta.env.VITE_API_URL || "http://127.0.0.1:4004";
-    const response = await fetch(
-      `${baseUrl}/files/${fileId}/download-decrypted`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ password }),
-      }
-    );
 
-    if (!response.ok) {
-      const msg = await response.text().catch(() => "");
-      throw new Error(msg || "Failed to download file");
-    }
+  const response = await fetch(`${baseUrl}/files/download/${fileId}`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+  });
 
-    return response;
-  },
+  if (!response.ok) {
+    const msg = await response.text().catch(() => "");
+    throw new Error(msg || "Failed to download envelope");
+  }
+
+  const envelopeResponse = await response.json();
+  const envelope = envelopeResponse.envelope_json;
+
+  // Decripta localmente usando o mesmo KDF scrypt
+  const decryptedBytes = await decryptEnvelope(envelope, password);
+
+  // Cria o download
+  const blob = new Blob([decryptedBytes]);
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = envelopeResponse.filename_original;
+  a.click();
+},
 
   async deleteFile(fileId: number, token: string): Promise<void> {
     return apiClient.delete(`/files/${fileId}`, token);

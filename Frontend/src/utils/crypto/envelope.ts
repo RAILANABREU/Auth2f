@@ -1,5 +1,6 @@
 import { deriveKey } from "./scrypt";
 import { encryptFile } from "./aes-gcm";
+import { decryptFile } from "./aes-gcm";
 
 export interface EncryptionParams {
   n: number;
@@ -50,4 +51,31 @@ export async function createEncryptedEnvelope(
     nonce: nonceB64,
     kdfParams,
   };
+}
+
+
+export async function decryptEnvelope(
+  envelope: {
+    ciphertext: string; // base64 vindo do backend
+    salt: string;
+    nonce: string;
+    kdf_params: EncryptionParams;
+  },
+  password: string
+): Promise<Uint8Array> {
+  // Converte base64 para Uint8Array
+  const b64ToBytes = (b64: string) =>
+    Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+
+  const saltBytes = b64ToBytes(envelope.salt);
+  const nonceBytes = b64ToBytes(envelope.nonce);
+  const ciphertextBytes = b64ToBytes(envelope.ciphertext);
+
+  // Deriva a chave usando o mesmo método scrypt
+  const key = await deriveKey(password, saltBytes, envelope.kdf_params);
+
+  // Decripta usando AES-GCM
+  const plaintext = await decryptFile(ciphertextBytes.buffer, key, nonceBytes);
+
+  return new Uint8Array(plaintext);
 }
