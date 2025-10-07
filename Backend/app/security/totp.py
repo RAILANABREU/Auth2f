@@ -8,5 +8,4 @@ def make_otpauth_uri(username: str, secret: str, issuer: str) -> str:
     return totp.provisioning_uri(name=username, issuer_name=issuer)
 
 def verify_totp_code(secret: str, code: str) -> bool:
-    # janela de tolerância pequena por drift de relógio
     return pyotp.TOTP(secret).verify(code, valid_window=1)

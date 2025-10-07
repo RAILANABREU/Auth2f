@@ -53,89 +53,11 @@ def get_file(file_id: int, authorization: Optional[str] = Header(None), db: Sess
     env = json.loads(rec.envelope_json)
     return FileEnvelopeResponse(id=rec.id, filename_original=rec.filename_original, envelope_json=env, size_bytes=rec.size_bytes, created_at=rec.created_at)
 
-@router.post("/{file_id}/download-decrypted")
-def download_decrypted(
-    file_id: int,
-    body: dict = Body(...),
-    authorization: Optional[str] = Header(None),
-    db: Session = Depends(get_db),
-):
-  
-    user = _current_user(authorization, db)
-
-    pwd = body.get("password") if isinstance(body, dict) else None
-    if not pwd:
-        raise HTTPException(status_code=400, detail="Missing 'password' in request body")
-
-    rec = FileRepo(db).by_id_owner(file_id, user.id)
-    if not rec:
-        raise HTTPException(status_code=404, detail="File not found")
-
-    # Envelope might be stored as JSON string or already as dict depending on create path
-    try:
-        env = rec.envelope_json
-        if isinstance(env, str):
-            env = json.loads(env)
-    except Exception:
-        raise HTTPException(status_code=500, detail="Malformed envelope stored")
-
-    # Validate envelope structure
-    try:
-        kdf = env.get("kdf")
-        kdf_params = env.get("kdf_params", {})
-        salt_b64 = env.get("salt")
-        nonce_b64 = env.get("nonce")
-        ciphertext_b64 = env.get("ciphertext")
-        if not all([kdf, salt_b64, nonce_b64, ciphertext_b64]):
-            raise ValueError("Incomplete envelope")
-    except Exception:
-        raise HTTPException(status_code=400, detail="Invalid envelope format")
-
-    if kdf != "scrypt":
-        raise HTTPException(status_code=400, detail="Unsupported KDF; expected 'scrypt'")
-
-    try:
-        salt = base64.b64decode(salt_b64)
-        nonce = base64.b64decode(nonce_b64)
-        ciphertext = base64.b64decode(ciphertext_b64)
-    except Exception:
-        raise HTTPException(status_code=400, detail="Invalid base64 in envelope")
-
-    # Derive key using scrypt parameters from envelope (provide sensible defaults if missing)
-    try:
-        n = int(kdf_params.get("n", 2**14))
-        r = int(kdf_params.get("r", 8))
-        p = int(kdf_params.get("p", 1))
-        dklen = int(kdf_params.get("dklen", 32))
-    except Exception:
-        raise HTTPException(status_code=400, detail="Invalid kdf_params")
-
-    try:
-        key = hashlib.scrypt(password=pwd.encode("utf-8"), salt=salt, n=n, r=r, p=p, dklen=dklen)
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"KDF failed: {str(e)}")
-
-    # Decrypt with AES-GCM
-    try:
-        aesgcm = AESGCM(key)
-        plaintext = aesgcm.decrypt(nonce, ciphertext, None)
-    except InvalidTag:
-        raise HTTPException(status_code=400, detail="Decryption failed: invalid password or corrupted data")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Decryption error: {str(e)}")
-
-    # Return plaintext as a downloadable stream
-    buffer = io.BytesIO(plaintext)
-    buffer.seek(0)
-    filename = rec.filename_original or f"file_{rec.id}"
-    headers = {"Content-Disposition": f'attachment; filename="{filename}"'}
-    return StreamingResponse(buffer, media_type="application/octet-stream", headers=headers)
-
 @router.post("/upload-multipart", status_code=201)
 async def upload_multipart(
     authorization: Optional[str] = Header(None),
     db: Session = Depends(get_db),
-    filename: str = Form(...),
+    filename_original: str = Form(...),
     v: int = Form(...),
     kdf: str = Form(...),
     kdf_params: str = Form(...),  # JSON em string
@@ -167,8 +89,32 @@ async def upload_multipart(
 
     rec = FileRepo(db).create(
         owner_id=user.id,
-        filename_original=filename,
+        filename_original=filename_original,
         envelope_json=envelope,
         size_bytes=size_bytes,
     )
-    return {"id": rec.id, "message": "uploaded: ", "filename": filename}
+    return {"id": rec.id, "message": "uploaded: ", "filename_original": filename_original}
+
+@router.get("/download/{file_id}")
+@router.get("/download/{file_id}", response_model=FileEnvelopeResponse)
+def download_envelope(file_id: int, authorization: Optional[str] = Header(None), db: Session = Depends(get_db)):
+    """
+    Retorna o envelope criptografado para que o cliente possa realizar a decriptação local.
+    """
+    user = _current_user(authorization, db)
+    rec = FileRepo(db).by_id_owner(file_id, user.id)
+    if not rec:
+        raise HTTPException(status_code=404, detail="File not found")
+
+    try:
+        env = json.loads(rec.envelope_json)
+    except Exception:
+        raise HTTPException(status_code=500, detail="Invalid envelope format")
+
+    return FileEnvelopeResponse(
+        id=rec.id,
+        filename_original=rec.filename_original,
+        envelope_json=env,
+        size_bytes=rec.size_bytes,
+        created_at=rec.created_at
+    )
